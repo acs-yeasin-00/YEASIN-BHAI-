@@ -115,7 +115,7 @@ module.exports = {
     } catch (err) {
       console.error("❌ Gist Error:", err.message || err);
       return api.sendMessage(
-        "⚠️ Failed to create gist. Maybe server issue.\n💬 Contact author for help: https://m.me/ye.bi.nobi.tai.244493",
+        "⚠️ Failed to create gist. Maybe server issue.\n💬 Contact author for help: https://www.facebook.com/profile.php?id=100000474035409",
         event.threadID,
         event.messageID
       );

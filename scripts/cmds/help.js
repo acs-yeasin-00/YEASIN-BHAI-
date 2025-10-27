@@ -1,29 +1,5 @@
-const fs = require("fs-extra");
-const path = require("path");
-const axios = require("axios");
 const { commands, aliases } = global.GoatBot;
 const { getPrefix } = global.utils;
-
-const localImageDir = path.join(__dirname, "cache");
-const localImagePath = path.join(localImageDir, "help.jpg");
-const imageUrl = "https://i.ibb.co/7d0xWxvF/Woy0-Cap-QF7.jpg.jpeg";
-
-async function ensureImageCached() {
-  if (!fs.existsSync(localImagePath)) {
-    try {
-      const res = await axios.get(imageUrl, { responseType: "stream" });
-      await fs.ensureDir(localImageDir);
-      await new Promise((resolve, reject) => {
-        const writer = fs.createWriteStream(localImagePath);
-        res.data.pipe(writer);
-        writer.on("finish", resolve);
-        writer.on("error", reject);
-      });
-    } catch (err) {
-      console.error("[Help] Failed to cache image:", err.message);
-    }
-  }
-}
 
 function roleTextToString(role) {
   switch (role) {
@@ -54,17 +30,16 @@ module.exports = {
     const prefix = await getPrefix(threadID);
     const argLower = args.map(i => i.toLowerCase());
 
-    await ensureImageCached();
+    const header = `╔═════ ❖ ≡ ❖ ═════╗
+   𝙃𝙄 𝙉𝘼 𝙏𝘼 𝑯𝙀𝙇𝙋 𝙈𝙀𝙉𝙐
+╚═════ ❖ ≡ ❖ ═════╝\n`;
 
-    const header = `╔═════ ❖ ≡ ❖ ═════╗\n   𝙎𝘼𝙆𝙐𝙍𝘼 𝑯𝙀𝙇𝙋 𝙈𝙀𝙉𝙐\n╚═════ ❖ ≡ ❖ ═════╝\n`;
-
-    // /help -c <category>
+    // help -c <category>
     if (argLower[0] === "-c" && args.length > 1) {
       const inputRaw = args.slice(1).join(" ");
       const normalizedInput = inputRaw.toLowerCase().replace(/[-_]/g, " ").trim();
 
       const matchedCmds = [];
-
       for (const [name, cmd] of commands) {
         const rawCat = cmd.config.category || "Uncategorized";
         const normalizedCat = rawCat.toLowerCase().replace(/[-_]/g, " ").trim();
@@ -77,29 +52,25 @@ module.exports = {
         return message.reply(`❌ No commands found for exact category "${inputRaw}".`);
       }
 
-      const msg =
-`${header}
+      const msg = `${header}
 ✦━━━━━━━━━━━━━✦
 ❍ CATEGORY: ${inputRaw.toUpperCase()}
 ✦━━━━━━━━━━━━━✦
 ${matchedCmds.sort().map(name => `┋❍ ${name}`).join("\n")}
 ┕━━━━━━━━━━━━━━✦
-
 Total: ${matchedCmds.length} command(s)`;
 
-      const reply = await message.reply({
-        body: msg,
-        attachment: fs.existsSync(localImagePath) ? fs.createReadStream(localImagePath) : null
-      });
-
+      const reply = await message.reply(msg);
       setTimeout(() => {
-        global.GoatBot.api.unsendMessage(reply.messageID);
-        global.GoatBot.api.unsendMessage(event.messageID);
+        try {
+          global.GoatBot.api.unsendMessage(reply.messageID);
+          global.GoatBot.api.unsendMessage(event.messageID);
+        } catch (e) {}
       }, 45 * 1000);
       return;
     }
 
-    // /help — all commands
+    // help (all commands)
     if (args.length === 0) {
       const categories = {};
       for (const [name, cmd] of commands) {
@@ -109,36 +80,32 @@ Total: ${matchedCmds.length} command(s)`;
         categories[cat].push(name);
       }
 
-      let msg =
-`${header}
-`;
-
+      let msg = `${header}`;
       for (const cat of Object.keys(categories).sort()) {
         msg += `┍━[ ${cat} ]\n`;
         msg += categories[cat].sort().map(name => `┋❍ ${name}`).join("\n") + "\n";
         msg += `┕━━━━━━━━━━━━━━✦\n`;
       }
 
-      msg += `\n┍━━━[ INFO ]━━━•◇
+      msg += `
+┍━━━[ INFO ]━━━•◇
 ┋❍ TOTAL CMDS : ${commands.size}
 ┋❍ PREFIX      : ${prefix}
-┋❍ CREATOR     : Ew'r Saim
-┋❍ FACEBOOK    : https://www.facebook.com/ye.bi.nobi.tai.244493
+┋❍ CREATOR     : 𝑌𝑒𝑎𝑠𝑖𝑛 𝐴ℎ𝑚𝑒𝑑
+┋❍ FACEBOOK    : https://www.facebook.com/profile.php?id=100000474035409
 ┕━━━━━━━━━━━━•◇`;
 
-      const reply = await message.reply({
-        body: msg,
-        attachment: fs.existsSync(localImagePath) ? fs.createReadStream(localImagePath) : null
-      });
-
+      const reply = await message.reply(msg);
       setTimeout(() => {
-        global.GoatBot.api.unsendMessage(reply.messageID);
-        global.GoatBot.api.unsendMessage(event.messageID);
+        try {
+          global.GoatBot.api.unsendMessage(reply.messageID);
+          global.GoatBot.api.unsendMessage(event.messageID);
+        } catch (e) {}
       }, 45 * 1000);
       return;
     }
 
-    // /help <command>
+    // help <command>
     const commandName = args[0].toLowerCase();
     const command = commands.get(commandName) || commands.get(aliases.get(commandName));
     if (!command) {
@@ -147,21 +114,24 @@ Total: ${matchedCmds.length} command(s)`;
 
     const c = command.config;
     const description =
-      typeof c.description === "string" ? c.description :
-      (c.shortDescription?.en || c.longDescription?.en) || "No description.";
+      typeof c.description === "string"
+        ? c.description
+        : c.shortDescription?.en || c.longDescription?.en || "No description.";
     const aliasText = c.aliases && c.aliases.length > 0 ? c.aliases.join(", ") : "None";
 
     let guideText = "";
     if (c.guide) {
-      guideText = typeof c.guide === "string"
-        ? c.guide
-        : Object.entries(c.guide).map(([lang, val]) => `${lang.toUpperCase()}: ${val}`).join("\n");
+      guideText =
+        typeof c.guide === "string"
+          ? c.guide
+          : Object.entries(c.guide)
+              .map(([lang, val]) => `${lang.toUpperCase()}: ${val}`)
+              .join("\n");
     } else {
       guideText = "No guide available.";
     }
 
-    const helpMsg =
-`${header}
+    const helpMsg = `${header}
 ┍━[ 🔎 COMMAND HELP ]
 ┋❍ NAME        : ${c.name}
 ┋❍ DESCRIPTION : ${description}
@@ -177,10 +147,11 @@ ${guideText.split("\n").map(line => "┋❍ " + line).join("\n")}
 ┕━━━━━━━━━━━━━━✦`;
 
     const reply = await message.reply(helpMsg);
-
     setTimeout(() => {
-      global.GoatBot.api.unsendMessage(reply.messageID);
-      global.GoatBot.api.unsendMessage(event.messageID);
+      try {
+        global.GoatBot.api.unsendMessage(reply.messageID);
+        global.GoatBot.api.unsendMessage(event.messageID);
+      } catch (e) {}
     }, 45 * 1000);
   }
 };
