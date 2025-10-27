@@ -17,7 +17,7 @@ module.exports = {
   onStart: async function ({ args, message, event, api }) {
     const input = args[0]?.toLowerCase();
 
-    const configPath = path.join(__dirname, "..", "..", "config.json");
+    const configPath = path.join(__dirname, "..", "..", "config.dev.json");
     let config;
     try {
       config = JSON.parse(fs.readFileSync(configPath, "utf-8"));

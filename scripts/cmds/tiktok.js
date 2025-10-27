@@ -1,180 +1,87 @@
-const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
+const a = require("axios");
+const b = require("fs");
 
 module.exports = {
   config: {
     name: "tiktok",
-    aliases: ["tt"],
-    version: "2 0",
-    author: "Saimx69x",
+    aliases: ["tik"],
+    version: "0.0.1",
+    author: "ArYAN",
+    countDown: 5,
     role: 0,
-    shortDescription: "Search and download TikTok videos",
-    longDescription: "Paginated TikTok video search (10 per page) ",
+    description: {
+      en: "Search and download TikTok videos"
+    },
     category: "media",
-    guide: "{p}tiktok <keyword>"
-  },
-
-  onStart: async function ({ api, event, args }) {
-    const query = args.join(" ");
-    if (!query)
-      return api.sendMessage("🌀 | Type a keyword!\nExample: /tiktok sakura haruka", event.threadID, event.messageID);
-
-    try {
-      api.setMessageReaction("⌛️", event.messageID, event.threadID, () => {});
-    } catch (e) {
-      console.error("Reaction error (start):", e.message);
-    }
-
-    try {
-      const res = await axios.get(`https://xsaim8x-xxx-api.onrender.com/api/tiktok?query=${encodeURIComponent(query)}`, { timeout: 15000 });
-      const data = res.data?.results || res.data?.data || [];
-
-      if (!data || data.length === 0) {
-        try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-        return api.sendMessage("❌ | No TikTok videos found!", event.threadID, event.messageID);
-      }
-
-      const allResults = Array.isArray(data) ? data.slice(0, 30) : [];
-      try { api.setMessageReaction("✅️", event.messageID, event.threadID, () => {}); } catch {}
-
-      await sendPage(api, event, allResults, 1, query);
-    } catch (err) {
-      console.error("Fetch error:", err?.message || err);
-      try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-      api.sendMessage("⚠️ | Failed to fetch TikTok results. Try again later.", event.threadID, event.messageID);
+    guide: {
+      en: "{pn} <keyword>\n\nExample:\n{pn} tomake chai"
     }
   },
 
-  onReply: async function ({ api, event, Reply }) {
+  onStart: async function ({ api: c, event: d, args: e, commandName: f }) {
+    if (!e[0]) return c.sendMessage("❌ Please provide a search keyword.", d.threadID, d.messageID);
+
+    const g = e.join(" ");
+    const h = `http://65.109.80.126:20409/aryan/tsearchv2?search=${encodeURIComponent(g)}&count=20`;
+
     try {
-      if (event.senderID !== Reply.author) return;
-
-      const body = event.body.trim().toLowerCase();
-
-      try { api.setMessageReaction("⌛️", event.messageID, event.threadID, () => {}); } catch {}
-
-      if (body === "next") {
-        const nextPage = Reply.page + 1;
-        const maxPage = Math.ceil(Reply.results.length / 10);
-        if (nextPage > maxPage) {
-          try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-          return api.sendMessage("⚠️ | No more results!", event.threadID, event.messageID);
-        }
-
-        try { api.unsendMessage(Reply.resultMsgID); } catch {}
-        try { api.setMessageReaction("✅️", event.messageID, event.threadID, () => {}); } catch {}
-        return await sendPage(api, event, Reply.results, nextPage, Reply.query);
+      const { data: i } = await a.get(h);
+      if (!i.status || !i.data || i.data.length === 0) {
+        return c.sendMessage("❌ No results found.", d.threadID, d.messageID);
       }
 
-      const choice = parseInt(body);
-      if (isNaN(choice) || choice < 1 || choice > 10) {
-        try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-        return api.sendMessage("⚠️ | Reply a number (1–10) or 'next'.", event.threadID, event.messageID);
-      }
+      const j = i.data.slice(0, 15);
 
-      const index = (Reply.page - 1) * 10 + (choice - 1);
-      const selected = Reply.results[index];
-      if (!selected) {
-        try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-        return api.sendMessage("❌ | Invalid choice!", event.threadID, event.messageID);
-      }
+      let k = "🕹️ TikTok\n\n";
+      j.forEach((l, m) => {
+        k += `${m + 1}• ${l.title}\n`;
+      });
 
-      try { api.unsendMessage(Reply.resultMsgID); } catch {}
+      c.sendMessage(k + "\nReply with a number 1-15", d.threadID, (n, o) => {
+        if (n) return;
+        global.GoatBot.onReply.set(o.messageID, {
+          commandName: f,
+          messageID: o.messageID,
+          author: d.senderID,
+          results: j
+        });
+      }, d.messageID);
 
-      const filePath = path.join(__dirname, `cache_tt_video_${event.senderID}.mp4`);
-      try {
-        const videoRes = await axios.get(selected.noWatermark, { responseType: "arraybuffer", timeout: 30000 });
-        fs.writeFileSync(filePath, Buffer.from(videoRes.data, "binary"));
+    } catch (p) {
+      console.error(p);
+      return c.sendMessage("❌ Failed to search TikTok.", d.threadID, d.messageID);
+    }
+  },
 
-        try { api.setMessageReaction("✅️", event.messageID, event.threadID, () => {}); } catch {}
+  onReply: async function ({ api: q, event: r, Reply: s }) {
+    const { results: t, messageID: u } = s;
+    const v = parseInt(r.body);
 
-        api.sendMessage(
-          {
-            body: `🎬 ${selected.title ? (selected.title.length > 60 ? selected.title.slice(0, 57) + "..." : selected.title) : "TikTok Video"}\n👁️ ${selected.views || "0"} | ❤️ ${selected.likes || "0"} | 💬 ${selected.comments || "0"}`,
-            attachment: fs.createReadStream(filePath)
-          },
-          event.threadID,
-          (err) => {
-            try { fs.unlinkSync(filePath); } catch {}
-            if (err) {
-              console.error("Send video error:", err);
-              try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-              api.sendMessage("❌ | Failed to send video.", event.threadID, event.messageID);
-            }
-          },
-          event.messageID
-        );
-      } catch (err2) {
-        console.error("Download/send error:", err2?.message || err2);
-        try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-        api.sendMessage("❌ | Failed to download or send TikTok video.", event.threadID, event.messageID);
-      }
-    } catch (err) {
-      console.error("onReply error:", err);
-      try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-      api.sendMessage("⚠️ | Something went wrong while replying!", event.threadID, event.messageID);
+    if (isNaN(v) || v < 1 || v > t.length) {
+      return q.sendMessage("❌ Invalid choice. Please reply with a number between 1 and 15.", r.threadID, r.messageID);
+    }
+
+    const w = t[v - 1];
+    const x = `tiktok_${Date.now()}.mp4`;
+
+    try {
+      const y = await a.get(w.video, { responseType: "arraybuffer" });
+      b.writeFileSync(x, Buffer.from(y.data));
+
+      await q.unsendMessage(u);
+
+      q.sendMessage(
+        {
+          body: `🎬 ${w.title}`,
+          attachment: b.createReadStream(x)
+        },
+        r.threadID,
+        () => b.unlinkSync(x),
+        r.messageID
+      );
+    } catch (z) {
+      console.error(z);
+      return q.sendMessage("❌ Failed to download video.", r.threadID, r.messageID);
     }
   }
 };
-async function sendPage(api, event, allResults, page, query) {
-  const start = (page - 1) * 10;
-  const end = start + 10;
-  const pageResults = allResults.slice(start, end);
-
-  let message = `🎵 𝗧𝗶𝗸𝗧𝗼𝗸 𝗥𝗲𝘀𝘂𝗹𝘁𝘀 (${query}) - Page ${page}\n\n`;
-  const attachments = [];
-
-  for (let i = 0; i < pageResults.length; i++) {
-    const v = pageResults[i];
-    const shortTitle = v && v.title ? (v.title.length > 45 ? v.title.slice(0, 45) + "..." : v.title) : "Untitled";
-    message += `${i + 1}. 🎬 ${shortTitle}\n👁️ ${v.views || 0} views\n\n`;
-
-    try {
-      const imgPath = path.join(__dirname, `cache_tt_${event.senderID}_${page}_${i}.jpg`);
-      const imgRes = await axios.get(v.cover, { responseType: "arraybuffer", timeout: 10000 });
-      fs.writeFileSync(imgPath, Buffer.from(imgRes.data, "binary"));
-      attachments.push(fs.createReadStream(imgPath));
-    } catch (e) {
-      console.error("Cover fetch failed:", e.message);
-    }
-  }
-
-  message += "👉 Reply with a number (1–10) to download.\n➡️ Type 'next' for more results.";
-
-  return new Promise((resolve) => {
-    api.sendMessage(
-      { body: message.trim(), attachment: attachments.length ? attachments : undefined },
-      event.threadID,
-      (err, info) => {
-        if (err) {
-          console.error("sendPage error:", err);
-          try { api.setMessageReaction("❌️", event.messageID, event.threadID, () => {}); } catch {}
-          api.sendMessage("⚠️ | Failed to send results.", event.threadID, event.messageID);
-          attachments.forEach((att) => {
-            try { fs.unlinkSync(att.path); } catch {}
-          });
-          return resolve();
-        }
-
-        global.GoatBot.onReply.set(info.messageID, {
-          commandName: "tiktok",
-          author: event.senderID,
-          results: allResults,
-          query,
-          page,
-          resultMsgID: info.messageID
-        });
-
-        setTimeout(() => {
-          attachments.forEach((att) => {
-            try { fs.unlinkSync(att.path); } catch {}
-          });
-        }, 60000);
-
-        resolve();
-      },
-      event.messageID
-    );
-  });
-        }

@@ -1,6 +1,8 @@
 const fs = require("fs-extra");
 const { utils } = global;
 
+const 👑 OWNER_FB = "https://www.facebook.com/profile.php?id=100004726270950";
+
 module.exports = {
 	config: {
 		name: "prefix",
@@ -45,7 +47,7 @@ module.exports = {
 			confirmThisThread: "Please react to this message to confirm change prefix in your box chat",
 			successGlobal: "Changed prefix of system bot to: %1",
 			successThisThread: "Changed prefix in your box chat to: %1",
-			myPrefix: "🌐 System prefix: %1\n🛸 Your box chat prefix: %2"
+			myPrefix: "🌐Global prefix is: %1\n🛸Your group chat prefix is: %2"
 		}
 	},
 
@@ -97,7 +99,10 @@ module.exports = {
 	onChat: async function ({ event, message, getLang }) {
 		if (event.body && event.body.toLowerCase() === "prefix")
 			return () => {
-				return message.reply(getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID)));
+				const infoText = getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID));
+				// Append your Facebook link under the prefix info
+				const replyText = `${infoText}\n\n🔗 Owner: ${OWNER_FB}`;
+				return message.reply(replyText);
 			};
 	}
 };

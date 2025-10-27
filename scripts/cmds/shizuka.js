@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { GoatWrapper } = require("fca-saim-x69x");
+const { GoatWrapper } = require("fca-liane-utils");
 
 module.exports.config = {
   name: "shizuka",
