@@ -25,31 +25,31 @@
     "ignoreCommand": []
   },
   "adminBot": [
-    "61573725567297",
-    "61565898444113"
+    "100004726270950",
+    "100000474457283"
   ],
   "developer": [
-    "61565898444113",
-    "61573725567297"
+    "100004726270950",
+    "100000474457283"
   ],
   "vipuser": [
-    "61573725567297",
-    "61565898444113"
+    "100004726270950",
+    "100000474457283"
   ],
   "reactBy": {
-    "delete": ["🗑️", "❌", "😠", "😡", "😾"],
-    "kick": ["👟", "🦵"]
+    "delete": ["🗑️", "😠", "😡", "😾"],
+    "kick": ["🤬", "🦵"]
   }, 
   "whiteListMode": {
     "enable": false,
     "whiteListIds": [],
     "notes": "if you enable this feature, only the ids in the whiteListIds section can use the bot"
   },
-  "nickNameBot": "Your_Bot_Name",
+  "nickNameBot": "[ / ] • 𝖧𝖨 𝖭𝖠 𝖳𝖠 🎀",
   "prefix": "/",
   "database": {
-    "type": "sqlite",
-    "uriMongodb": "",
+    "type": "mongodb",
+    "uriMongodb": "mongodb+srv://yeasinbhai:YEASINBHAI12345@cluster0.cu3mxh5.mongodb.net/YEASINAHMED?retryWrites=true&w=majority&appName=Cluster0",
     "autoSyncWhenStart": false,
     "autoRefreshThreadInfoFirstTime": true,
     "notes": "(1) type selects 'json' or 'sqlite' or 'mongodb'. If you choose mongodb, enter uri connect mongodb in the uriMongodb section, instructions to get uri connect mongodb at: https://youtu.be/z1f9urHW5xY. I recommend using 'mongodb' or 'sqlite', json is not recommended because it is not stable. (2) when you set autoSyncWhenStart to true, the bot will automatically synchronize the data in the database when starting the bot, this will make the bot start slower. (3) when you set autoRefreshThreadInfoFirstTime to true, the bot will automatically refresh the thread information when get first message from the thread since starting the bot"
