@@ -1,53 +1,31 @@
 const fs = require("fs-extra");
 const { utils } = global;
 
-const 👑 OWNER_FB = "https://www.facebook.com/profile.php?id=100004726270950";
+const OWNER_FB = "https://www.facebook.com/profile.php?id=100004726270950";
 
 module.exports = {
 	config: {
 		name: "prefix",
-		version: "1.4",
-		author: "NTKhang",
+		version: "1.6",
+		author: "Yeasin 👑",
 		countDown: 5,
 		role: 0,
-		description: "Thay đổi dấu lệnh của bot trong box chat của bạn hoặc cả hệ thống bot (chỉ admin bot)",
+		description: "Show or change bot prefix",
 		category: "config",
 		guide: {
-			vi: "   {pn} <new prefix>: thay đổi prefix mới trong box chat của bạn"
-				+ "\n   Ví dụ:"
-				+ "\n    {pn} #"
-				+ "\n\n   {pn} <new prefix> -g: thay đổi prefix mới trong hệ thống bot (chỉ admin bot)"
-				+ "\n   Ví dụ:"
-				+ "\n    {pn} # -g"
-				+ "\n\n   {pn} reset: thay đổi prefix trong box chat của bạn về mặc định",
-			en: "   {pn} <new prefix>: change new prefix in your box chat"
-				+ "\n   Example:"
-				+ "\n    {pn} #"
-				+ "\n\n   {pn} <new prefix> -g: change new prefix in system bot (only admin bot)"
-				+ "\n   Example:"
-				+ "\n    {pn} # -g"
-				+ "\n\n   {pn} reset: change prefix in your box chat to default"
+			en: "{pn} <new prefix>: change bot prefix\n{pn} reset: reset to default"
 		}
 	},
 
 	langs: {
-		vi: {
-			reset: "Đã reset prefix của bạn về mặc định: %1",
-			onlyAdmin: "Chỉ admin mới có thể thay đổi prefix hệ thống bot",
-			confirmGlobal: "Vui lòng thả cảm xúc bất kỳ vào tin nhắn này để xác nhận thay đổi prefix của toàn bộ hệ thống bot",
-			confirmThisThread: "Vui lòng thả cảm xúc bất kỳ vào tin nhắn này để xác nhận thay đổi prefix trong nhóm chat của bạn",
-			successGlobal: "Đã thay đổi prefix hệ thống bot thành: %1",
-			successThisThread: "Đã thay đổi prefix trong nhóm chat của bạn thành: %1",
-			myPrefix: "🌐 Prefix của hệ thống: %1\n🛸 Prefix của nhóm bạn: %2"
-		},
 		en: {
 			reset: "Your prefix has been reset to default: %1",
-			onlyAdmin: "Only admin can change prefix of system bot",
-			confirmGlobal: "Please react to this message to confirm change prefix of system bot",
-			confirmThisThread: "Please react to this message to confirm change prefix in your box chat",
-			successGlobal: "Changed prefix of system bot to: %1",
-			successThisThread: "Changed prefix in your box chat to: %1",
-			myPrefix: "🌐Global prefix is: %1\n🛸Your group chat prefix is: %2"
+			onlyAdmin: "Only admin can change global prefix",
+			confirmGlobal: "React to confirm changing global prefix 👑",
+			confirmThisThread: "React to confirm changing chat prefix 👑",
+			successGlobal: "👑 Global prefix changed to: %1",
+			successThisThread: "👑 Prefix in your chat changed to: %1",
+			myPrefix: "🌐 Global prefix: %1\n🛸 Group prefix: %2"
 		}
 	},
 
@@ -97,12 +75,10 @@ module.exports = {
 	},
 
 	onChat: async function ({ event, message, getLang }) {
-		if (event.body && event.body.toLowerCase() === "prefix")
-			return () => {
-				const infoText = getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID));
-				// Append your Facebook link under the prefix info
-				const replyText = `${infoText}\n\n🔗 Owner: ${OWNER_FB}`;
-				return message.reply(replyText);
-			};
+		if (event.body && event.body.toLowerCase() === "prefix") {
+			const infoText = getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID));
+			const replyText = `${infoText}\n\n💫 𝑂𝑊𝑁𝐸𝑅: ${OWNER_FB}`;
+			return message.reply(replyText);
+		}
 	}
 };
