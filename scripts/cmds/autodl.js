@@ -1,123 +1,85 @@
 const axios = require("axios");
-
-const dApi = async () => {
-  const base = await axios.get(
-    "https://raw.githubusercontent.com/Sh4nDev/ShAn.s-Api/refs/heads/main/Api.json"
-  );
-  return base.data.shan;
+const fs = require("fs-extra");
+//const tinyurl = require("tinyurl");
+const baseApiUrl = async () => {
+  const base = await axios.get(`https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json`);
+  return base.data.api;
 };
 
-module.exports.config = {
+const config = {
   name: "autodl",
-  version: "1.6.9",
-  author: "♡︎ 𝗦𝗵𝗔𝗻 ♡︎ | Modified by Yeasin",
-  role: 0,
-  description: "Automatically download videos from supported platforms!",
-  category: "𝗠𝗘𝗗𝗜𝗔",
-  countDown: 10,
-  guide: {
-    en: "Send a valid video link from supported platforms (TikTok, Facebook, YouTube, Twitter, Instagram, etc.), and the bot will download it automatically.",
-  },
-};
-module.exports.onStart = ({}) => {};
-
-const platforms = {
-  TikTok: {
-    regex: /(?:https?:\/\/)?(?:www\.)?tiktok\.com/,
-    endpoint: "/ShAn-tikDL?url=",
-  },
-  Facebook: {
-    regex: /(?:https?:\/\/)?(?:www\.)?(facebook\.com|fb\.watch|facebook\.com\/share\/v)/,
-    endpoint: "/ShAn-fbDL?url=",
-  },
-  YouTube: {
-    regex: /(?:https?:\/\/)?(?:www\.)?(youtube\.com|youtu\.be)/,
-    endpoint: "/ShAn-ytDL?url=",
-  },
-  Twitter: {
-    regex: /(?:https?:\/\/)?(?:www\.)?x\.com/,
-    endpoint: "/ShAn-alldl?url=",
-  },
-  Instagram: {
-    regex: /(?:https?:\/\/)?(?:www\.)?instagram\.com/,
-    endpoint: "/ShAn-instaDL?url=",
+  version: "2.0",
+  author: "Dipto",
+  credits: "Dipto",
+  description: "Auto download video from tiktok, facebook, Instagram, YouTube, and more",
+  category: "media",
+  commandCategory: "media",
+  usePrefix: true,
+  prefix: true,
+  dependencies: {
+   // "tinyurl": "",
+    "fs-extra": "",
   },
 };
 
-const detectPlatform = (url) => {
-  for (const [platform, data] of Object.entries(platforms)) {
-    if (data.regex.test(url)) {
-      return { platform, endpoint: data.endpoint };
-    }
-  }
-  return null;
-};
-
-const downloadVideo = async (apiUrl, url) => {
-  const match = detectPlatform(url);
-  if (!match) {
-    throw new Error("No matching platform for the provided URL.");
-  }
-
-  const { platform, endpoint } = match;
-  const endpointUrl = `${apiUrl}${endpoint}${encodeURIComponent(url)}`;
-  console.log(`🔗 Fetching from: ${endpointUrl}`);
-
+const onStart = () => {};
+const onChat = async ({ api, event }) => {
+  let dipto = event.body ? event.body : "", ex, cp;
   try {
-    const res = await axios.get(endpointUrl);
-    console.log(`✅ API Response:`, res.data);
-
-    const videoUrl = res.data?.videoUrl;
-    if (videoUrl) {
-      return { 
-        downloadUrl: videoUrl, 
-        platform: res.data.platform || platform
-      };
+    if (
+      dipto.startsWith("https://vt.tiktok.com") ||
+      dipto.startsWith("https://www.tiktok.com/") ||
+      dipto.startsWith("https://www.facebook.com") ||
+      dipto.startsWith("https://www.instagram.com/") ||
+      dipto.startsWith("https://youtu.be/") ||
+      dipto.startsWith("https://youtube.com/") ||
+      dipto.startsWith("https://x.com/") ||
+      dipto.startsWith("https://youtube.com/")
+|| dipto.startsWith("https://www.instagram.com/p/") ||
+      dipto.startsWith("https://pin.it/") ||
+      dipto.startsWith("https://twitter.com/") ||
+      dipto.startsWith("https://vm.tiktok.com") ||
+      dipto.startsWith("https://fb.watch")
+    ) {
+      api.setMessageReaction("⌛", event.messageID, {}, true);
+      const w = await api.sendMessage("Wait Bby <😘", event.threadID);
+      const response = await axios.get(`${await baseApiUrl()}/alldl?url=${encodeURIComponent(dipto)}`);
+      const d = response.data;
+      if (d.result.includes(".jpg")) {
+        ex = ".jpg";
+        cp = "Here's your Photo <😘";
+      } else if (d.result.includes(".png")) {
+        ex = ".png";
+        cp = "Here's your Photo <😘";
+      } else if (d.result.includes(".jpeg")) {
+        ex = ".jpeg";
+        cp = "Here's your Photo <😘";
+      } else {
+        ex = ".mp4";
+        cp = d.cp;
+      }
+      const path = __dirname + `/cache/video${ex}`;
+      fs.writeFileSync(path, Buffer.from((await axios.get(d.result, { responseType: "arraybuffer" })).data, "binary"));
+      const tinyUrlResponse = await axios.get(`https://tinyurl.com/api-create.php?url=${d.result}`);
+      api.setMessageReaction("✅", event.messageID, {}, true);
+      api.unsendMessage(w.messageID);
+      await api.sendMessage({
+          body: `${d.cp || null}\n✅ | Link: ${tinyUrlResponse.data || null}`,
+          attachment: fs.createReadStream(path),
+        }, event.threadID, () => fs.unlinkSync(path), event.messageID
+      )
     }
-  } catch (error) {
-    console.error(`❌ Error fetching data from ${endpointUrl}:`, error.message);
-    throw new Error("Download link not found.");
+  } catch (err) {
+    api.setMessageReaction("❌", event.messageID, {}, true);
+    console.log(err);
+    api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
   }
-  throw new Error("No video URL found in the API response.");
 };
 
-module.exports.onChat = async ({ api, event }) => {
-  const { body, threadID, messageID } = event;
-
-  if (!body) return;
-
-  const urlMatch = body.match(/https?:\/\/[^\s]+/);
-  if (!urlMatch) return;
-
-  const url = urlMatch[0];
-
-  const platformMatch = detectPlatform(url);
-  if (!platformMatch) return;
-
-  try {
-    // Start reaction ⏳
-    api.setMessageReaction("⏳", messageID, () => {}, true);
-
-    const apiUrl = await dApi();
-    const { downloadUrl, platform } = await downloadVideo(apiUrl, url);
-
-    const videoStream = await axios.get(downloadUrl, { responseType: "stream" });
-
-    // Success reaction ✅
-    api.setMessageReaction("✅", messageID, () => {}, true);
-
-    api.sendMessage(
-      {
-        body: `✅ Successfully downloaded the video!\n🔖 Platform: ${platform}`,
-        attachment: [videoStream.data],
-      },
-      threadID,
-      messageID
-    );
-  } catch (error) {
-    // Error reaction ❎
-    api.setMessageReaction("❎", messageID, () => {}, true);
-    console.error(`❌ Error while processing the URL:`, error.message);
-    api.sendMessage("❌ Sorry! Failed to download the video.", threadID, messageID);
-  }
+module.exports = {
+  config,
+  onChat,
+  onStart,
+  run: onStart,
+  handleEvent: onChat,
 };
