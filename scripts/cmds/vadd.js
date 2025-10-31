@@ -34,7 +34,7 @@ async function onStart({ message, event, args }) {
 }
 
 const config = {
-  name: "add",
+  name: "vadd",
   aliases: [],
   version: "1.0",
   author: "ArYAN",
