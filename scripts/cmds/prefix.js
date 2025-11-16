@@ -1,7 +1,7 @@
 const fs = require("fs-extra");
 const { utils } = global;
 
-const OWNER_FB = "https://www.facebook.com/profile.php?id=100004726270950";
+const OWNER_FB = "https://www.facebook.com/profile.php?id=61583519825289";
 
 module.exports = {
 	config: {
