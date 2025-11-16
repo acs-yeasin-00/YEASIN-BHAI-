@@ -92,7 +92,7 @@ Total: ${matchedCmds.length} command(s)`;
 ┋❍ TOTAL CMDS : ${commands.size}
 ┋❍ PREFIX      : ${prefix}
 ┋❍ CREATOR     : 𝑌𝑒𝑎𝑠𝑖𝑛 𝐴ℎ𝑚𝑒𝑑
-┋❍ FACEBOOK    : https://www.facebook.com/profile.php?id=100000474035409
+┋❍ FACEBOOK    : https://www.facebook.com/profile.php?id=61583519825289
 ┕━━━━━━━━━━━━•◇`;
 
       const reply = await message.reply(msg);
